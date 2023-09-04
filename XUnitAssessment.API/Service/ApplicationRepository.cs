@@ -50,13 +50,40 @@ namespace XUnitAssessment.API.Service
                 return null;
 
             }
-            existingField.AddChangeDeleteFlag = updatedField.AddChangeDeleteFlag;
-            existingField.Sequence = updatedField.Sequence;
-            existingField.Type = updatedField.Type;
-            existingField.TextAreaRows = updatedField.TextAreaRows;
-            existingField.TextAreaCols = updatedField.TextAreaCols;
-            existingField.Label = updatedField.Label;
-            existingField.DisplayColumns = updatedField.DisplayColumns;
+            if (updatedField.AddChangeDeleteFlag != null) {
+
+                existingField.AddChangeDeleteFlag = updatedField.AddChangeDeleteFlag;
+
+            }
+            if (updatedField.Sequence != null)
+            {
+                existingField.Sequence = updatedField.Sequence;
+            }
+            if(updatedField.Type != null)
+            {
+                existingField.Type = updatedField.Type;
+
+            }
+            if (updatedField.TextAreaRows != null)
+            {
+                existingField.TextAreaRows = updatedField.TextAreaRows;
+
+            }
+            if (updatedField.TextAreaCols != null)
+            {
+                existingField.TextAreaCols = updatedField.TextAreaCols;
+
+            }
+            if (updatedField.Label != null)
+            {
+                existingField.Label = updatedField.Label;
+
+            }
+            if(updatedField.DisplayColumns != null) {
+
+                existingField.DisplayColumns = updatedField.DisplayColumns;
+
+            }
 
             await _dbContext.SaveChangesAsync();
             return existingField;
@@ -109,8 +136,9 @@ namespace XUnitAssessment.API.Service
                                                             .Select(group => new
                                                             {
                                                                 FormName = group.Key,
-                                                                Fields = group.ToList()
+                                                                Fields = group.ToList(),
                                                             }).ToListAsync();
+
             if (result != null)
             {
                 return new ObjectResult(result);

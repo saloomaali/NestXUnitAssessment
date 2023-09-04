@@ -37,7 +37,7 @@ namespace XUnitAssessment.API.Controllers
                     var existingColumn = await _Interface.AddField(newField, existingForm);
                     if (existingColumn != null)
                     {
-                        return Ok("Success");
+                        return Ok(newField);
                     }
                     return BadRequest("No Coulumn exists with given columnId");
                 }

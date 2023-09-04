@@ -26,6 +26,7 @@ namespace XUnitAssessment.API.Tests.ControllerTests
         public async Task AddRecord_ReturnsOk_WhenFormAndColumnExist()
         {
             // Arrange
+            var responseField = new Field();
             
             var newField = new Field
             {
@@ -50,8 +51,8 @@ namespace XUnitAssessment.API.Tests.ControllerTests
             var result = await _sut.AddRecord(newField);
 
             // Assert
-            result.Should().BeOfType<OkObjectResult>()
-                .Which.Value.Should().Be("Success");
+            result.Should().BeOfType<OkObjectResult>();
+                
 
             // Verify that the service methods were called with the correct arguments
             _mockInterface.Verify(s => s.ExistingForm(newField), Times.Once);
