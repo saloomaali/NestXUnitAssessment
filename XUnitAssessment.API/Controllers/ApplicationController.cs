@@ -30,7 +30,7 @@ namespace XUnitAssessment.API.Controllers
             try
             {
                 
-                var existingForm = await _Interface.ExistingForm(newField);
+                var existingForm = await _Interface.IsFormExists(newField);
                 if (existingForm != null)
                 {
 
@@ -81,7 +81,7 @@ namespace XUnitAssessment.API.Controllers
             try
             {
                 
-                var existing = await _Interface.ExistingField(id);
+                var existing = await _Interface.IsFieldExists(id);
                 if (existing == null)
                 {
                     return NotFound("No Such Field exists");

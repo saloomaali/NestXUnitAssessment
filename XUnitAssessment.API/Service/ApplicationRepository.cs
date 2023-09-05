@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.ActionConstraints;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using XUnitAssessment.API.Data;
 using XUnitAssessment.API.Models;
 
@@ -17,7 +18,7 @@ namespace XUnitAssessment.API.Service
             
         }
 
-        public async Task<Form> ExistingForm(Field? newField)
+        public async Task<Form> IsFormExists(Field? newField)
         {
             
                 var existingForm = await _dbContext.Form.Where(x => x.Id == newField.FormId).FirstOrDefaultAsync(x => x.TableId != null);
@@ -90,7 +91,7 @@ namespace XUnitAssessment.API.Service
 
         }
 
-        public async Task<Field> ExistingField(Guid id)
+        public async Task<Field> IsFieldExists(Guid id)
         {
 
             var existing = await _dbContext.Field.FindAsync(id);
@@ -131,14 +132,13 @@ namespace XUnitAssessment.API.Service
         public async Task<IActionResult> FieldByFormId(Guid formId)
         {
             var result = await _dbContext.Field.Where(x => x.FormId == formId)
-                                                            .Include(x => x.form)
+
                                                             .GroupBy(x => x.form.Name)
                                                             .Select(group => new
                                                             {
                                                                 FormName = group.Key,
                                                                 Fields = group.ToList(),
                                                             }).ToListAsync();
-
             if (result != null)
             {
                 return new ObjectResult(result);

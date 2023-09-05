@@ -161,3 +161,6 @@ D:\NestAssessment\NestXUnitAssessment\XUnitAssessment.API.Tests\obj\Debug\net6.0
 D:\NestAssessment\NestXUnitAssessment\XUnitAssessment.API.Tests\obj\Debug\net6.0\XUnitAssessment.API.Tests.pdb
 D:\NestAssessment\NestXUnitAssessment\XUnitAssessment.API.Tests\obj\Debug\net6.0\XUnitAssessment.API.Tests.genruntimeconfig.cache
 D:\NestAssessment\NestXUnitAssessment\XUnitAssessment.API.Tests\obj\Debug\net6.0\ref\XUnitAssessment.API.Tests.dll
+D:\NestAssessment\NestXUnitAssessment\XUnitAssessment.API.Tests\bin\Debug\net6.0\System.Text.Encodings.Web.dll
+D:\NestAssessment\NestXUnitAssessment\XUnitAssessment.API.Tests\bin\Debug\net6.0\System.Text.Json.dll
+D:\NestAssessment\NestXUnitAssessment\XUnitAssessment.API.Tests\bin\Debug\net6.0\runtimes\browser\lib\net6.0\System.Text.Encodings.Web.dll

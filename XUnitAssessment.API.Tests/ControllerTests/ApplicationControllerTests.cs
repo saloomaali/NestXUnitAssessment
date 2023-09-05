@@ -1,3 +1,4 @@
+using AutoFixture;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using System.Runtime.CompilerServices;
@@ -16,6 +17,10 @@ namespace XUnitAssessment.API.Tests.ControllerTests
         public ApplicationControllerTests()
         {
             _fixture = new Fixture();
+           
+            _fixture.Behaviors.Remove(new ThrowingRecursionBehavior());
+            _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+
             _mockInterface = _fixture.Freeze<Mock<Interface>>();
             _sut = new ApplicationController(_mockInterface.Object);
         }
@@ -26,36 +31,28 @@ namespace XUnitAssessment.API.Tests.ControllerTests
         public async Task AddRecord_ReturnsOk_WhenFormAndColumnExist()
         {
             // Arrange
-            var responseField = new Field();
-            
-            var newField = new Field
-            {
-                FormId = _fixture.Create<Guid>(),
-                ColumnId = _fixture.Create<Guid>(),
-            };
-            var existingForm = new Form
-            {
-                Id = (Guid)newField.FormId,
-                TableId = _fixture.Create<Guid>(),
-            };
-            var existingColumn = new AOColumn
-            {
-                Id = (Guid)newField.ColumnId,
-                TableId = existingForm.TableId,
-            };
 
-            _mockInterface.Setup(s => s.ExistingForm(newField)).ReturnsAsync(existingForm);
+            var newField = _fixture.Create<Field>();
+            var existingForm = _fixture.Create<Form>();
+            existingForm.Id = (Guid)newField.FormId;
+            var existingColumn = _fixture.Create<AOColumn>();
+            existingColumn.Id = existingForm.Id;
+            existingColumn.TableId = existingForm.TableId;
+
+
+            _mockInterface.Setup(s => s.IsFormExists(newField)).ReturnsAsync(existingForm);
             _mockInterface.Setup(s => s.AddField(newField, existingForm)).ReturnsAsync(existingColumn);
 
             // Act
             var result = await _sut.AddRecord(newField);
 
             // Assert
-            result.Should().BeOfType<OkObjectResult>();
+            result.Should().BeOfType<OkObjectResult>()
+                   .Which.Value.Should().BeOfType<Field>();
                 
 
             // Verify that the service methods were called with the correct arguments
-            _mockInterface.Verify(s => s.ExistingForm(newField), Times.Once);
+            _mockInterface.Verify(s => s.IsFormExists(newField), Times.Once);
             _mockInterface.Verify(s => s.AddField(newField, existingForm), Times.Once);
         }
         //2
@@ -63,14 +60,10 @@ namespace XUnitAssessment.API.Tests.ControllerTests
         public async Task AddRecord_ReturnsNotFound_WhenFormNotFound()
         {
             // Arrange
-            var newField = new Field
-            {
-                FormId = _fixture.Create<Guid>(),
-                ColumnId = _fixture.Create<Guid>(),
-               
-            };
+            var newField = _fixture.Create<Field>();
 
-            _mockInterface.Setup(s => s.ExistingForm(newField)).ReturnsAsync((Form)null);
+
+            _mockInterface.Setup(s => s.IsFormExists(newField)).ReturnsAsync((Form)null);
 
             // Act
             var result = await _sut.AddRecord(newField);
@@ -80,7 +73,8 @@ namespace XUnitAssessment.API.Tests.ControllerTests
                 .Which.Value.Should().Be("No Form available with given FormId");
 
             // Verify that the service method was called with the correct argument
-            _mockInterface.Verify(s => s.ExistingForm(newField), Times.Once);
+            _mockInterface.Verify(s => s.IsFormExists(newField), Times.Once);
+            _mockInterface.Verify(s => s.AddField(newField, It.IsAny<Form>()), Times.Never);
         }
 
         //3
@@ -88,18 +82,11 @@ namespace XUnitAssessment.API.Tests.ControllerTests
         public async Task AddRecord_ReturnsBadRequest_WhenColumnNotFound()
         {
             // Arrange
-            var newField = new Field
-            {
-                FormId = _fixture.Create<Guid>(),
-                ColumnId = _fixture.Create<Guid>(),
-            };
-            var existingForm = new Form
-            {
-                Id = (Guid)newField.FormId,
-                TableId = _fixture.Create<Guid>(),
-            };
+            var newField = _fixture.Create<Field>();
+            var existingForm = _fixture.Create<Form>();
+            existingForm.Id = (Guid)newField.FormId;
 
-            _mockInterface.Setup(s => s.ExistingForm(newField)).ReturnsAsync(existingForm);
+            _mockInterface.Setup(s => s.IsFormExists(newField)).ReturnsAsync(existingForm);
             _mockInterface.Setup(s => s.AddField(newField, existingForm)).ReturnsAsync((AOColumn)null);
             
 
@@ -111,29 +98,43 @@ namespace XUnitAssessment.API.Tests.ControllerTests
                 .Which.Value.Should().Be("No Coulumn exists with given columnId");
 
             // Verify that the service methods were called with the correct arguments
-            _mockInterface.Verify(s => s.ExistingForm(newField), Times.Once);
+            _mockInterface.Verify(s => s.IsFormExists(newField), Times.Once);
             _mockInterface.Verify(s => s.AddField(newField, existingForm), Times.Once);
         }
 
         //4
         [Fact]
-        public async Task AddRecord_ReturnsBadRequest_WhenExceptionThrown()
+        public async Task AddRecord_ReturnsBadRequest_WhenExceptionThrownForExistingForm()
         {
             // Arrange
-            var newField = new Field
-            {
-                FormId = _fixture.Create<Guid>(),
-                ColumnId = _fixture.Create<Guid>(),
-                
-            };
-            var existingForm = new Form
-            {
-                Id = (Guid)newField.FormId,
-                TableId = _fixture.Create<Guid>()
-               
-            };
+            var newField = _fixture.Create<Field>();
 
-            _mockInterface.Setup(s => s.ExistingForm(newField)).ReturnsAsync(existingForm);
+
+            _mockInterface.Setup(s => s.IsFormExists(newField)).ThrowsAsync(new Exception("Test exception"));
+
+            // Act
+            var result = await _sut.AddRecord(newField);
+
+            // Assert
+            result.Should().BeOfType<BadRequestObjectResult>()
+                .Which.Value.Should().Be("Test exception");
+
+            // Verify that the service method was called with the correct argument
+            _mockInterface.Verify(s => s.IsFormExists(newField), Times.Once);
+            _mockInterface.Verify(s => s.AddField(newField, new Form()), Times.Never);
+        }
+
+
+        //5
+        [Fact]
+        public async Task AddRecord_ReturnsBadRequest_WhenExceptionThrownForAddField()
+        {
+            // Arrange
+            var newField = _fixture.Create<Field>();
+            var existingForm = _fixture.Create<Form>();
+            existingForm.Id = (Guid)newField.FormId;
+
+            _mockInterface.Setup(s => s.IsFormExists(newField)).ReturnsAsync(existingForm);
             _mockInterface.Setup(s => s.AddField(newField, existingForm)).ThrowsAsync(new Exception("Test exception"));
 
             // Act
@@ -144,7 +145,7 @@ namespace XUnitAssessment.API.Tests.ControllerTests
                 .Which.Value.Should().Be("Test exception");
 
             // Verify that the service methods were called with the correct arguments
-            _mockInterface.Verify(s => s.ExistingForm(newField), Times.Once);
+            _mockInterface.Verify(s => s.IsFormExists(newField), Times.Once);
             _mockInterface.Verify(s => s.AddField(newField, existingForm), Times.Once);
         }
         //TEST CASES FOR EditRecord()
@@ -153,17 +154,11 @@ namespace XUnitAssessment.API.Tests.ControllerTests
         public async Task EditRecord_ReturnsOk_WhenFieldExists()
         {
             // Arrange
-            var fieldId = _fixture.Create<Guid>(); 
-            var updatedField = new Field
-            {
-                Id = fieldId,
-                
-            };
-            var existingField = new Field
-            {
-                Id = fieldId,
-                
-            };
+            var fieldId = _fixture.Create<Guid>();
+            var updatedField = _fixture.Create<Field>();
+            updatedField.Id = fieldId;
+            var existingField = _fixture.Create<Field>();
+            existingField.Id = fieldId;
 
             _mockInterface.Setup(s => s.EditField(fieldId, updatedField)).ReturnsAsync(existingField);
 
@@ -184,12 +179,9 @@ namespace XUnitAssessment.API.Tests.ControllerTests
         public async Task EditRecord_ReturnsNotFound_WhenFieldNotFound()
         {
             // Arrange
-            var fieldId = _fixture.Create<Guid>(); 
-            var updatedField = new Field
-            {
-                Id = fieldId,
-                
-            };
+            var fieldId = _fixture.Create<Guid>();
+            var updatedField = _fixture.Create<Field>();
+            updatedField.Id = fieldId;
 
             _mockInterface.Setup(s => s.EditField(fieldId, updatedField)).ReturnsAsync((Field)null);
             
@@ -212,11 +204,8 @@ namespace XUnitAssessment.API.Tests.ControllerTests
             // Arrange
            
             var fieldId = _fixture.Create<Guid>();
-            var updatedField = new Field
-            {
-                Id = fieldId,
-                
-            };
+            var updatedField = _fixture.Create<Field>();
+            updatedField.Id = fieldId;
 
             _mockInterface.Setup(s => s.EditField(fieldId, updatedField)).ThrowsAsync(new Exception("Test exception"));
             
@@ -241,8 +230,8 @@ namespace XUnitAssessment.API.Tests.ControllerTests
         {
             // Arrange
             var id = _fixture.Create<Guid>();
-            var existingField = new Field();
-            _mockInterface.Setup(x => x.ExistingField(id))
+            var existingField = _fixture.Create<Field>();
+            _mockInterface.Setup(x => x.IsFieldExists(id))
                       .ReturnsAsync(existingField);
 
             _mockInterface.Setup(x => x.DeleteField(existingField))
@@ -256,7 +245,7 @@ namespace XUnitAssessment.API.Tests.ControllerTests
               .Subject.Value.Should().Be("Field Deleted");
 
             // Verify that the methods were called as expected
-            _mockInterface.Verify(i => i.ExistingField(id), Times.Once);
+            _mockInterface.Verify(i => i.IsFieldExists(id), Times.Once);
             _mockInterface.Verify(i => i.DeleteField(existingField), Times.Once);
             
         }
@@ -268,7 +257,7 @@ namespace XUnitAssessment.API.Tests.ControllerTests
             // Arrange
             var id = _fixture.Create<Guid>();
 
-            _mockInterface.Setup(i => i.ExistingField(id)).ReturnsAsync((Field)null);
+            _mockInterface.Setup(i => i.IsFieldExists(id)).ReturnsAsync((Field)null);
 
             
 
@@ -280,20 +269,46 @@ namespace XUnitAssessment.API.Tests.ControllerTests
                 .Which.Value.Should().Be("No Such Field exists");
 
             // Verify that the method was called
-            _mockInterface.Verify(i => i.ExistingField(id), Times.Once);
+            _mockInterface.Verify(i => i.IsFieldExists(id), Times.Once);
             _mockInterface.Verify(i => i.DeleteField(It.IsAny<Field>()), Times.Never);
         }
 
+
         //3
         [Fact]
-        public async Task DeleteRecord_ReturnsBadRequest_WhenErrorDuringDeletion()
+        public async Task DeleteRecord_ReturnsBadRequest_WhenErrorDuringIsFieldExists()
         {
             // Arrange
             var id = _fixture.Create<Guid>();
 
-            var existingField = new Field(); 
+            _mockInterface.Setup(i => i.IsFieldExists(id)).ThrowsAsync(new Exception("Error during deletion"));
 
-            _mockInterface.Setup(i => i.ExistingField(id)).ReturnsAsync(existingField);
+
+
+            // Act
+            var result = await _sut.DeleteRecord(id);
+
+            // Assert
+            // Assert
+            result.Should().BeOfType<BadRequestObjectResult>()
+                .Which.Value.Should().Be("Error during deletion");
+
+            // Verify that the method was called
+            _mockInterface.Verify(i => i.IsFieldExists(id), Times.Once);
+            _mockInterface.Verify(i => i.DeleteField(It.IsAny<Field>()), Times.Never);
+        }
+
+
+        //4
+        [Fact]
+        public async Task DeleteRecord_ReturnsBadRequest_WhenErrorDuringDeleteField()
+        {
+            // Arrange
+            var id = _fixture.Create<Guid>();
+
+            var existingField = _fixture.Create<Field>();
+
+            _mockInterface.Setup(i => i.IsFieldExists(id)).ReturnsAsync(existingField);
             _mockInterface.Setup(i => i.DeleteField(existingField)).ThrowsAsync(new Exception("Error during deletion"));
 
             
@@ -306,7 +321,7 @@ namespace XUnitAssessment.API.Tests.ControllerTests
                 .Which.Value.Should().Be("Error during deletion");
 
             // Verify that the methods were called
-            _mockInterface.Verify(i => i.ExistingField(id), Times.Once);
+            _mockInterface.Verify(i => i.IsFieldExists(id), Times.Once);
             _mockInterface.Verify(i => i.DeleteField(existingField), Times.Once);
         }
 
@@ -319,7 +334,7 @@ namespace XUnitAssessment.API.Tests.ControllerTests
             // Arrange
             
             var fieldType = _fixture.Create<string>(); // Generate a random field type.
-            var expectedFields = new List<Field> { new Field(), new Field() };
+            var expectedFields = _fixture.CreateMany<Field>(2).ToList();
 
             _mockInterface.Setup(s => s.GetFieldByType(fieldType)).ReturnsAsync(expectedFields);
 
@@ -385,7 +400,7 @@ namespace XUnitAssessment.API.Tests.ControllerTests
         {
             // Arrange
             var formName = _fixture.Create<string>(); 
-            var expectedFields = new List<Field> { new Field(), new Field() };
+            var expectedFields = _fixture.CreateMany<Field>(2).ToList();
 
             _mockInterface.Setup(s => s.FieldByFormName(formName)).ReturnsAsync(expectedFields);
 
@@ -442,7 +457,7 @@ namespace XUnitAssessment.API.Tests.ControllerTests
 
         //TEST CASES FOR GetFields()
         //1
-        [Fact]
+       [Fact]
         public async Task GetFields_ReturnsOk_WhenFieldsFound()
         {
             // Arrange
@@ -482,7 +497,7 @@ namespace XUnitAssessment.API.Tests.ControllerTests
             // Verify that the service method was called with the correct argument
             _mockInterface.Verify(s => s.FieldByFormId(formId), Times.Once);
         }
-
+       
         //3
         [Fact]
         public async Task GetFields_ReturnsBadRequest_WhenExceptionThrown()

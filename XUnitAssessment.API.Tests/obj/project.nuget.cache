@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "CoCPE5AnOOVh5JFyztlmiVtRDK9BIdn/fSOxgVNxD+Qr4mWx3I2OIN9aujeTZe5bRMCZOvkIvwEbrDg9Rtj01g==",
+  "dgSpecHash": "YuBX5uYLeYl/fs0GMWQxFuPttpHNhC6x+5sePe51vjwr+oJRLcMIR17W6TASmHRZLx27XTdvXTLOsdYyOLQkqg==",
   "success": true,
   "projectFilePath": "D:\\NestAssessment\\NestXUnitAssessment\\XUnitAssessment.API.Tests\\XUnitAssessment.API.Tests.csproj",
   "expectedPackageFiles": [
@@ -137,8 +137,8 @@
     "C:\\Users\\salooma.ali\\.nuget\\packages\\system.text.encoding\\4.3.0\\system.text.encoding.4.3.0.nupkg.sha512",
     "C:\\Users\\salooma.ali\\.nuget\\packages\\system.text.encoding.codepages\\5.0.0\\system.text.encoding.codepages.5.0.0.nupkg.sha512",
     "C:\\Users\\salooma.ali\\.nuget\\packages\\system.text.encoding.extensions\\4.3.0\\system.text.encoding.extensions.4.3.0.nupkg.sha512",
-    "C:\\Users\\salooma.ali\\.nuget\\packages\\system.text.encodings.web\\4.7.2\\system.text.encodings.web.4.7.2.nupkg.sha512",
-    "C:\\Users\\salooma.ali\\.nuget\\packages\\system.text.json\\4.7.2\\system.text.json.4.7.2.nupkg.sha512",
+    "C:\\Users\\salooma.ali\\.nuget\\packages\\system.text.encodings.web\\7.0.0\\system.text.encodings.web.7.0.0.nupkg.sha512",
+    "C:\\Users\\salooma.ali\\.nuget\\packages\\system.text.json\\7.0.0\\system.text.json.7.0.0.nupkg.sha512",
     "C:\\Users\\salooma.ali\\.nuget\\packages\\system.text.regularexpressions\\4.3.0\\system.text.regularexpressions.4.3.0.nupkg.sha512",
     "C:\\Users\\salooma.ali\\.nuget\\packages\\system.threading\\4.3.0\\system.threading.4.3.0.nupkg.sha512",
     "C:\\Users\\salooma.ali\\.nuget\\packages\\system.threading.tasks\\4.3.0\\system.threading.tasks.4.3.0.nupkg.sha512",
