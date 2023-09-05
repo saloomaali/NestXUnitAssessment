@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using XUnitAssessment.API.Models;
+using XUnitAssessment.API.Models.Dto;
 
 namespace XUnitAssessment.API.Service
 {
@@ -13,7 +14,7 @@ namespace XUnitAssessment.API.Service
         public Task<Field> DeleteField(Field? existing);
         public Task<List<Field>> GetFieldByType(string type);
         public Task<List<Field>> FieldByFormName(string formName);
-        public Task<IActionResult> FieldByFormId(Guid formId);
+        public Task<FieldsWithFormNameDto> FieldByFormId(Guid formId);
 
     }
 }

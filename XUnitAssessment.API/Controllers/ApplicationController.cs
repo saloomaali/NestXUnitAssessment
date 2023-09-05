@@ -150,11 +150,11 @@ namespace XUnitAssessment.API.Controllers
         {
             try
             {
-                var result = await _Interface.FieldByFormId(formId);
+                var response = await _Interface.FieldByFormId(formId);
 
-                if (result != null)
+                if (response != null)
                 {
-                    return Ok(result);
+                    return Ok(response);
 
                 }
                 return NotFound("No Field exist for given FormId");

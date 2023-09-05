@@ -4,6 +4,7 @@ using Moq;
 using System.Runtime.CompilerServices;
 using XUnitAssessment.API.Controllers;
 using XUnitAssessment.API.Models;
+using XUnitAssessment.API.Models.Dto;
 using XUnitAssessment.API.Service;
 
 namespace XUnitAssessment.API.Tests.ControllerTests
@@ -463,14 +464,15 @@ namespace XUnitAssessment.API.Tests.ControllerTests
             // Arrange
             var formId = _fixture.Create<Guid>(); 
             
-            var response = _fixture.Create<ObjectResult>();
+            var response = _fixture.Create<FieldsWithFormNameDto>();
             _mockInterface.Setup(s => s.FieldByFormId(formId)).ReturnsAsync(response);
     
             // Act
             var result = await _sut.GetFields(formId);
 
             // Assert
-            result.Should().BeOfType<OkObjectResult>();
+            result.Should().BeOfType<OkObjectResult>()
+                .Which.Value.Should().BeEquivalentTo(response);
                 
 
             // Verify that the service method was called with the correct argument
@@ -485,7 +487,8 @@ namespace XUnitAssessment.API.Tests.ControllerTests
             // Arrange
             var formId = _fixture.Create<Guid>();
             
-            _mockInterface.Setup(s => s.FieldByFormId(formId)).ReturnsAsync((ObjectResult)null);
+            
+            _mockInterface.Setup(s => s.FieldByFormId(formId)).ReturnsAsync((FieldsWithFormNameDto)null);
 
             // Act
             var result = await _sut.GetFields(formId);

@@ -6,32 +6,33 @@ using System.ComponentModel;
 using System.Text.RegularExpressions;
 using XUnitAssessment.API.Data;
 using XUnitAssessment.API.Models;
+using XUnitAssessment.API.Models.Dto;
 
 namespace XUnitAssessment.API.Service
 {
-    public class ApplicationRepository: Interface
+    public class ApplicationRepository : Interface
     {
         private readonly ApplicationDbContext _dbContext;
         public ApplicationRepository(ApplicationDbContext dbContext) {
 
             _dbContext = dbContext;
-            
+
         }
 
         public async Task<Form> IsFormExists(Field? newField)
         {
-            
-                var existingForm = await _dbContext.Form.Where(x => x.Id == newField.FormId).FirstOrDefaultAsync(x => x.TableId != null);
 
-                if (existingForm != null)
-                {
-                    return existingForm;
-                }
-                return null;
-            
-           
+            var existingForm = await _dbContext.Form.Where(x => x.Id == newField.FormId).FirstOrDefaultAsync(x => x.TableId != null);
+
+            if (existingForm != null)
+            {
+                return existingForm;
+            }
+            return null;
+
+
         }
-        public async Task<AOColumn> AddField(Field? newField,Form? existingForm)
+        public async Task<AOColumn> AddField(Field? newField, Form? existingForm)
         {
             var existingColumn = await _dbContext.AOColumn.FirstOrDefaultAsync(x => x.Id == newField.ColumnId && x.TableId == existingForm.TableId);
             if (existingColumn != null)
@@ -60,7 +61,7 @@ namespace XUnitAssessment.API.Service
             {
                 existingField.Sequence = updatedField.Sequence;
             }
-            if(updatedField.Type != null)
+            if (updatedField.Type != null)
             {
                 existingField.Type = updatedField.Type;
 
@@ -80,7 +81,7 @@ namespace XUnitAssessment.API.Service
                 existingField.Label = updatedField.Label;
 
             }
-            if(updatedField.DisplayColumns != null) {
+            if (updatedField.DisplayColumns != null) {
 
                 existingField.DisplayColumns = updatedField.DisplayColumns;
 
@@ -129,25 +130,28 @@ namespace XUnitAssessment.API.Service
             return null;
         }
 
-        public async Task<IActionResult> FieldByFormId(Guid formId)
+        public async Task<FieldsWithFormNameDto> FieldByFormId(Guid formId)
         {
+           
             var result = await _dbContext.Field.Where(x => x.FormId == formId)
+                                               .Include(x => x.form)
+                                               .ToListAsync();
 
-                                                            .GroupBy(x => x.form.Name)
-                                                            .Select(group => new
-                                                            {
-                                                                FormName = group.Key,
-                                                                Fields = group.ToList(),
-                                                            }).ToListAsync();
             if (result != null)
             {
-                return new ObjectResult(result);
+                var response = new FieldsWithFormNameDto
+                {
+                    FormName = result.First().form.Name,
+                    Fields = result
+                };
+                return response;
             }
             return null;
         }
-
-       
-
-        
     }
+
+
+
+
+    
 }
